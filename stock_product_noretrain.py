@@ -38,7 +38,7 @@ class LargeNew(Resource):
         print(name_id)
 
         if name_id=="ASHOKLEY.NS":
-            modelname='my_model2'
+            modelname='my_model_ashok'
             model_new = keras.models.load_model(modelname)
         elif name_id=='TATACOFFEE.NS':
             modelname='my_model_coffee'
