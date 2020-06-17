@@ -18,11 +18,12 @@ from tensorflow.keras.layers import Dense, Dropout, LSTM
 
 app = Flask(__name__)
 CORS(app)
-api = Api(app)
+api = Api(app,default='Modules',default_label='Stock Forecasting Model')
 
 name = api.model('name', {
         'name_id': fields.String(description='Enter Name', required=True, example='ABCD')
     })
+
 
 
 # @app.route('/')
