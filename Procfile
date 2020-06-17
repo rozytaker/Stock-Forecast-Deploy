@@ -1,0 +1,1 @@
+web: gunicorn stock_product_noretrain:app
