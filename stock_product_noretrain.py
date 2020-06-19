@@ -44,7 +44,9 @@ class LargeNew(Resource):
         elif name_id=='TATACOFFEE.NS':
             modelname='my_model_coffee'
             model_new = keras.models.load_model(modelname)
-
+        else:
+            modelname='my_model_generic'
+            model_new = keras.models.load_model(modelname)
 
 
         import pandas_datareader as pdr
@@ -164,7 +166,7 @@ class LargeNew(Resource):
         future_dataset['date']=future_dataset['date'].astype('str')
         del future_dataset['weekday']
 
-        future_dataset
+        future_dataset['StockName']=name_id
         print(future_dataset.shape)
         print(future_dataset.head(3))
         print('out',json.dumps(future_dataset.to_dict(orient='records')))
@@ -178,20 +180,125 @@ name = api.model('name', {
     })
 
 
+# @api.route('/model_validation')
+# class LargeNew2(Resource):
+#     @api.expect(name)
+#     def post(self):
+#         data = request.json
+#         name_id = data['name_id']
+#         if name_id=='ASHOKLEY.NS':
+#             data=pd.read_csv('model_validations_ASHOKLEY.NS.csv')
+#         elif name_id=='TATACOFFEE.NS':
+#             data=pd.read_csv('model_validations_TATACOFFEE.NS.csv')
+            
+#         response = make_response(json.dumps(data.to_dict(orient='records')))
+#         response.headers['content-type'] = 'application/octet-stream'
+#         return response
+
+
 @api.route('/model_validation')
-class LargeNew2(Resource):
+class LargeNew3(Resource):
     @api.expect(name)
     def post(self):
+
         data = request.json
         name_id = data['name_id']
-        if name_id=='ASHOKLEY.NS':
-            data=pd.read_csv('model_validations_ASHOKLEY.NS.csv')
+        
+        if name_id=="ASHOKLEY.NS":
+            modelname='my_model_ashok'
+            model_new = keras.models.load_model(modelname)
         elif name_id=='TATACOFFEE.NS':
-            data=pd.read_csv('model_validations_TATACOFFEE.NS.csv')
+            modelname='my_model_coffee'
+            model_new = keras.models.load_model(modelname)
+        else:
+            modelname='my_model_generic'
+            model_new = keras.models.load_model(modelname)
+
+
+        msft = yf.Ticker(name_id)
+        df_ori = msft.history('10y',interval='1d')
+        df=df_ori.reset_index()
+        df=df[0:df.shape[0]-1]
+        df1=df[['Date','Close']]
+        df1['Date']=pd.DatetimeIndex(df1['Date'])
+        df1['Date2']=pd.DatetimeIndex(df1['Date']).date
+        #creating dataframe
+        # data = df1.sort_index(ascending=True, axis=0)
+        del df1['Date']
+        df1=df1.set_index('Date2')
+        df1.tail(3)
+
+        #creating train and test sets
+        dataset = df1.values
+
+        train = dataset[0:round(df1.shape[0]*0.70),:]
+        valid = dataset[round(df1.shape[0]*0.70):,:]
+        # dataset.shape
+        print(train.shape)
+        print(valid.shape)
+
+        #converting dataset into x_train and y_train
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaled_data = scaler.fit_transform(dataset)
+
+        x_train, y_train = [], []
+        for i in range(100,len(train)):
+            x_train.append(scaled_data[i-100:i,0])
+            y_train.append(scaled_data[i,0])
+        x_train, y_train = np.array(x_train), np.array(y_train)
+
+        x_train = np.reshape(x_train, (x_train.shape[0],x_train.shape[1],1))
+
+
+        inputs = df1[len(df1) - len(valid) - 100:].values
+        inputs = inputs.reshape(-1,1)
+        inputs  = scaler.transform(inputs)
+
+
+        X_test = []
+        for i in range(100,inputs.shape[0]):
+            X_test.append(inputs[i-100:i,0])
+        X_test = np.array(X_test)
+
+        X_test = np.reshape(X_test, (X_test.shape[0],X_test.shape[1],1))
+        closing_price = model_new.predict(X_test)
+        closing_price = scaler.inverse_transform(closing_price)
+
+        train2 = df1[:round(df1.shape[0]*0.70)]
+        valid2= df1[round(df1.shape[0]*0.70):]
+        valid2['Predictions'] = closing_price
+        valid2['Predictions'] = round(valid2['Predictions'],3)
+        valid2.columns=['Original','Predictions']
+        valid3=valid2.tail(20)
+        valid3=valid3.reset_index()
+        valid3.columns=['Date','Original','Predictions']
+        valid3['StockName']=name_id
+        valid3['Date']=valid3['Date'].astype('str')
+
+
+        a_dict={}
+        def mean_absolute_percentage_error(y_true, y_pred): 
+            y_true, y_pred = np.array(y_true), np.array(y_pred)
+            return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+        print('MAPE',mean_absolute_percentage_error(closing_price, valid))
+
+        error=round(mean_absolute_percentage_error(closing_price, valid),2)
+        a_dict['Model Accuracy']=str(100-error)+'%'
+
+        for i in valid3['Date'].unique():
+            dataq=valid3[valid3['Date']==i]
+            del dataq['Date']
+            a_dict[i]=dataq.to_dict(orient='records')
             
-        response = make_response(json.dumps(data.to_dict(orient='records')))
+
+
+
+        response = make_response(json.dumps(a_dict))
         response.headers['content-type'] = 'application/octet-stream'
         return response
+
+
+
 
 if __name__ == "__main__":
     app.run(port=6002,debug=True)
