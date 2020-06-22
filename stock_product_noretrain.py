@@ -55,6 +55,15 @@ class LargeNew(Resource):
         df_ori = msft.history('10y',interval='1d')
         df=df_ori.reset_index()
         print(df.tail(1))
+        import datetime
+        hour=datetime.datetime.now().hour
+        # hour=9
+        
+        if hour in [16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7]:
+            df=df[0:df.shape[0]]
+        else:
+            df=df[0:df.shape[0]-1]    
+
         # df=df[0:2461]
         # df.tail(3)
 
@@ -218,7 +227,16 @@ class LargeNew3(Resource):
         msft = yf.Ticker(name_id)
         df_ori = msft.history('10y',interval='1d')
         df=df_ori.reset_index()
-        df=df[0:df.shape[0]-1]
+        # df=df[0:df.shape[0]-1]
+        import datetime
+        hour=datetime.datetime.now().hour
+        # hour=9
+
+        if hour in [16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7]:
+            df=df[0:df.shape[0]]
+        else:
+            df=df[0:df.shape[0]-1]    
+
         df1=df[['Date','Close']]
         df1['Date']=pd.DatetimeIndex(df1['Date'])
         df1['Date2']=pd.DatetimeIndex(df1['Date']).date
@@ -281,7 +299,7 @@ class LargeNew3(Resource):
             y_true, y_pred = np.array(y_true), np.array(y_pred)
             return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
         print('MAPE',mean_absolute_percentage_error(closing_price, valid))
-
+        print(hour)
         error=round(mean_absolute_percentage_error(closing_price, valid),2)
         a_dict['Model Accuracy']=str(100-error)+'%'
 
