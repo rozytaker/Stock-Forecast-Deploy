@@ -56,7 +56,13 @@ class LargeNew(Resource):
         df=df_ori.reset_index()
         print(df.tail(1))
         import datetime
-        hour=datetime.datetime.now().hour
+        # hour=datetime.datetime.now().hour
+        from datetime import datetime
+        from pytz import timezone    
+
+        ist = timezone('Asia/Kolkata')
+        ist_time = datetime.now(ist)
+        hour=ist_time.strftime('%H')
         # hour=9
         
         if hour in [16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7]:
@@ -229,7 +235,14 @@ class LargeNew3(Resource):
         df=df_ori.reset_index()
         # df=df[0:df.shape[0]-1]
         import datetime
-        hour=datetime.datetime.now().hour
+        # hour=datetime.datetime.now().hour
+        from datetime import datetime
+        from pytz import timezone    
+
+        ist = timezone('Asia/Kolkata')
+        ist_time = datetime.now(ist)
+        hour=ist_time.strftime('%H')
+        
         # hour=9
 
         if hour in [16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7]:
