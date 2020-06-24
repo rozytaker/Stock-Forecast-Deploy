@@ -64,10 +64,12 @@ class LargeNew(Resource):
         ist_time = datetime.now(ist)
         hour=ist_time.strftime('%H')
         # hour=9
-        
-        if hour in [16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7]:
+        print('hour',hour)
+        if int(hour) in [16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7]:
+            print('if')
             df=df[0:df.shape[0]]
         else:
+            print('else')
             df=df[0:df.shape[0]-1]    
 
         # df=df[0:2461]
@@ -122,12 +124,12 @@ class LargeNew(Resource):
             if(len(temp_input)>100):
                 #print(temp_input)
                 x_input=np.array(temp_input[1:])
-                print("{} day input {}".format(i,x_input))
+                # print("{} day input {}".format(i,x_input))
                 x_input=x_input.reshape(1,-1)
                 x_input = x_input.reshape((1, n_steps, 1))
                 #print(x_input)
                 yhat = model_new.predict(x_input, verbose=0)
-                print("{} day output {}".format(i,yhat))
+                # print("{} day output {}".format(i,yhat))
                 temp_input.extend(yhat[0].tolist())
                 temp_input=temp_input[1:]
                 #print(temp_input)
@@ -245,7 +247,7 @@ class LargeNew3(Resource):
         
         # hour=9
 
-        if hour in [16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7]:
+        if int(hour) in [16,17,18,19,20,21,22,23,0,1,2,3,4,5,6,7]:
             df=df[0:df.shape[0]]
         else:
             df=df[0:df.shape[0]-1]    
